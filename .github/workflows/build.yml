@@ -1,0 +1,79 @@
+name: Build
+
+on:
+  push:
+    branches: [ "main" ]
+  workflow_dispatch: {}
+
+jobs:
+  build:
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup .NET 7 SDK
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: "7.0.x"
+
+      - name: Restore
+        run: dotnet restore MIDIProgramSplitter.sln
+
+      - name: Publish GUI
+        run: >
+          dotnet publish MIDIProgramSplitter.GUI/MIDIProgramSplitter.GUI.csproj
+          -c Release
+          -r win-x64
+          --self-contained false
+          -o publish/GUI
+
+      - name: Publish CMD
+        run: >
+          dotnet publish MIDIProgramSplitter.CMD/MIDIProgramSplitter.CMD.csproj
+          -c Release_Win64
+          -r win-x64
+          -o publish/CMD
+
+      - name: Upload GUI artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: MIDIProgramSplitter-GUI-win-x64
+          path: publish/GUI
+
+      - name: Upload CMD artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: MIDIProgramSplitter-CMD-win-x64
+          path: publish/CMD
+
+  build-macos:
+    runs-on: macos-14
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup .NET 7 SDK
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: "7.0.x"
+
+      - name: Restore
+        run: dotnet restore MIDIProgramSplitter.sln
+
+      - name: Publish GUI (macOS arm64)
+        run: >
+          dotnet publish MIDIProgramSplitter.GUI/MIDIProgramSplitter.GUI.csproj
+          -c Release
+          -r osx-arm64
+          --self-contained true
+          -p:PublishSingleFile=false
+          -o publish/GUI-macos-arm64
+
+      - name: Upload GUI artifact (macOS arm64)
+        uses: actions/upload-artifact@v4
+        with:
+          name: MIDIProgramSplitter-GUI-macos-arm64
+          path: publish/GUI-macos-arm64
